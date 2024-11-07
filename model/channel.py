@@ -140,6 +140,24 @@ def initChannels():
         ]
 
         # P2 channels below:
+        doodle = Group.query.filter_by(_name='Doodle').first() 
+        create_and_compete_channels = [
+            Channel(name='Drawing Pad', group_id=doodle.id),
+            Channel(name='Chatroom', group_id=doodle.id),
+            Channel(name='Art Post', group_id=doodle.id),
+            Channel(name='Voting', group_id=doodle.id),
+        ]
+        
+        channels = home_page_channels + shared_interest_channels + vote_for_the_goat_channels
+        for channel in channels:
+            try:
+                db.session.add(channel)
+                db.session.commit()
+                print(f"Record created: {repr(channel)}")
+            except IntegrityError:
+                db.session.rollback()
+                print(f"Records exist, duplicate email, or error: {channel.name}")
+        
 
         # P3 channels below:
         
