@@ -88,7 +88,50 @@ class Channel(db.Model):
             'attributes': self._attributes,
             'group_id': self._group_id
         }
+        
+    def update(self, inputs):
+        """
+        Updates the channel object with new data.
+        
+        Args:
+            inputs (dict): A dictionary containing the new data for the channel.
+        
+        Returns:
+            Channel: The updated channel object, or None on error.
+        """
+        if not isinstance(inputs, dict):
+            return self
 
+        name = inputs.get("name", "")
+        group_id = inputs.get("group_id", None)
+
+        # Update table with new data
+        if name:
+            self._name = name
+        if group_id:
+            self._group_id = group_id
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return None
+        return self
+        
+    @staticmethod
+    def restore(data):
+        channels = {}
+        for channel_data in data:
+            _ = channel_data.pop('id', None)  # Remove 'id' from channel_data
+            name = channel_data.get("name", None)
+            channel = Channel.query.filter_by(_name=name).first()
+            if channel:
+                channel.update(channel_data)
+            else:
+                channel = Channel(**channel_data)
+                channel.create()
+        return channels
+    
 def initChannels():
     """
     The initChannels function creates the Channel table and adds tester data to the table.
@@ -165,8 +208,9 @@ def initChannels():
         internet_debates = Group.query.filter_by(_name='Internet Debates').first() 
         calico_vote = Group.query.filter_by(_name='Calico Vote').first() 
         dnero_store = Group.query.filter_by(_name='Dnero Store').first()
-        devrage_debates = Group.query.filter_by(_name='Beverage Debates').first()
+        beverage_debates = Group.query.filter_by(_name='Beverage Debates').first()
         nfl_goats = Group.query.filter_by(_name='NFL GOATs').first()
+        car_debates = Group.query.filter_by(_name='Car Debates').first()
         vote_for_the_goat_channels = [
             Channel(name='Milk vs Cereal', group_id=internet_debates.id),
             Channel(name='Hot Dog Sandwich', group_id=internet_debates.id),
@@ -174,6 +218,17 @@ def initChannels():
             Channel(name='Cats vs Dogs', group_id=internet_debates.id),
             Channel(name='Coffee or Tea', group_id=internet_debates.id),
         ]
+        
+        # P5 Channels: 
+        book_reviews = Group.query.filter_by(_name='Book Reviews').first() 
+        instabox = Group.query.filter_by(_name='Instabox').first() 
+        flavor_fusion = Group.query.filter_by(_name='Flavor Fusion').first()
+        update_the_nest = Group.query.filter_by(_name='Update The Nest').first()
+        rate_and_relate_channels = [
+            Channel(name='Fiction Books', group_id=book_reviews.id),
+            Channel(name='Nonfiction Books', group_id=book_reviews.id),
+        ]
+        
         
         channels = home_page_channels + shared_interest_channels + vote_for_the_goat_channels
         for channel in channels:
